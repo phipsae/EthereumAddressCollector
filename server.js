@@ -42,26 +42,31 @@ if (usePostgres) {
 } else {
   // Use SQLite (for local development)
   console.log('📁 Using SQLite database (local development)');
-  const sqlite3 = require('sqlite3').verbose();
-  db = new sqlite3.Database('./addresses.db', (err) => {
-    if (err) {
-      console.error('❌ Error opening SQLite database:', err.message);
-    } else {
-      console.log('✅ Connected to SQLite database');
-      // Create table if it doesn't exist
-      db.run(`CREATE TABLE IF NOT EXISTS addresses (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        address TEXT NOT NULL UNIQUE,
-        timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
-        user_agent TEXT,
-        notes TEXT
-      )`, (err) => {
-        if (err) {
-          console.error('❌ Error creating SQLite table:', err.message);
-        }
-      });
-    }
-  });
+  try {
+    const sqlite3 = require('sqlite3').verbose();
+    db = new sqlite3.Database('./addresses.db', (err) => {
+      if (err) {
+        console.error('❌ Error opening SQLite database:', err.message);
+      } else {
+        console.log('✅ Connected to SQLite database');
+        // Create table if it doesn't exist
+        db.run(`CREATE TABLE IF NOT EXISTS addresses (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          address TEXT NOT NULL UNIQUE,
+          timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
+          user_agent TEXT,
+          notes TEXT
+        )`, (err) => {
+          if (err) {
+            console.error('❌ Error creating SQLite table:', err.message);
+          }
+        });
+      }
+    });
+  } catch (err) {
+    console.error('❌ SQLite not available. Please set DATABASE_URL environment variable for PostgreSQL.');
+    process.exit(1);
+  }
 }
 
 // Database query helpers
