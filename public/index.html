@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Ethereum Address Collector</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <div class="container">
+      <div class="card">
+        <h1>📱 Ethereum Address Collection</h1>
+        <p class="subtitle">
+          Scan the QR code with your mobile device to submit your Ethereum
+          address
+        </p>
+
+        <div class="qr-container">
+          <div id="qrcode"></div>
+        </div>
+
+        <div class="url-display">
+          <p><strong>Collection URL:</strong></p>
+          <a href="/collect" id="collectionUrl" target="_blank"></a>
+        </div>
+
+        <div class="stats">
+          <div class="stat-item">
+            <span class="stat-number" id="addressCount">0</span>
+            <span class="stat-label">Addresses Collected</span>
+          </div>
+        </div>
+
+        <div class="button-group">
+          <a href="/collect" class="btn btn-primary">Open Collection Form</a>
+          <a href="/admin" class="btn btn-secondary">View Admin Dashboard</a>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      // Generate QR code using API
+      const collectionUrl = window.location.origin + "/collect";
+      document.getElementById("collectionUrl").textContent = collectionUrl;
+      document.getElementById("collectionUrl").href = collectionUrl;
+
+      // Create QR code image using API
+      const qrContainer = document.getElementById("qrcode");
+      const qrImg = document.createElement("img");
+      qrImg.src = `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(
+        collectionUrl
+      )}&color=6366f1&bgcolor=ffffff`;
+      qrImg.alt = "QR Code for collection URL";
+      qrImg.style.maxWidth = "100%";
+      qrImg.style.height = "auto";
+      qrImg.style.borderRadius = "8px";
+
+      qrImg.onerror = function () {
+        qrContainer.innerHTML =
+          '<div style="padding: 2rem; text-align: center; color: #ef4444;">❌ QR Code failed to load<br><small>Please use the URL below instead</small></div>';
+      };
+
+      qrContainer.appendChild(qrImg);
+
+      // Fetch and display address count
+      async function updateCount() {
+        try {
+          const response = await fetch("/api/count");
+          const data = await response.json();
+          if (data.success) {
+            document.getElementById("addressCount").textContent = data.count;
+          }
+        } catch (error) {
+          console.error("Error fetching count:", error);
+        }
+      }
+
+      updateCount();
+      // Update count every 10 seconds
+      setInterval(updateCount, 10000);
+    </script>
+  </body>
+</html>
