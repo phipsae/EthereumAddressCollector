@@ -1,0 +1,16 @@
+node_modules
+npm-debug.log
+.git
+.gitignore
+*.db
+addresses.db
+README.md
+.DS_Store
+server-sqlite-backup.js
+server-unified-backup.js
+server-postgres.js
+vercel.json
+fly.toml
+DEPLOYMENT.md
+RAILWAY_DEPLOY.md
+
