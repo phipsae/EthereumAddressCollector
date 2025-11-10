@@ -3,6 +3,7 @@ const { Pool } = require("pg");
 const cors = require("cors");
 const bodyParser = require("body-parser");
 const path = require("path");
+const { ethers } = require("ethers");
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -37,7 +38,9 @@ pool
     address TEXT NOT NULL UNIQUE,
     timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     user_agent TEXT,
-    notes TEXT
+    notes TEXT,
+    signature TEXT NOT NULL,
+    message TEXT NOT NULL
   )
 `
   )
@@ -52,7 +55,7 @@ pool
 
 // Submit an address
 app.post("/api/submit-address", async (req, res) => {
-  const { address, notes } = req.body;
+  const { address, notes, signature, message } = req.body;
   const userAgent = req.headers["user-agent"];
 
   // Basic validation
@@ -63,10 +66,37 @@ app.post("/api/submit-address", async (req, res) => {
     });
   }
 
+  // Require signature and message
+  if (!signature || !message) {
+    return res.status(400).json({
+      success: false,
+      message: "Signature and message are required",
+    });
+  }
+
+  // Verify signature
+  try {
+    const recoveredAddress = ethers.utils.verifyMessage(message, signature);
+
+    if (recoveredAddress.toLowerCase() !== address.toLowerCase()) {
+      return res.status(403).json({
+        success: false,
+        message:
+          "Signature verification failed. You must sign with the wallet you're submitting.",
+      });
+    }
+  } catch (err) {
+    console.error("Error verifying signature:", err);
+    return res.status(400).json({
+      success: false,
+      message: "Invalid signature format",
+    });
+  }
+
   try {
     const result = await pool.query(
-      "INSERT INTO addresses (address, user_agent, notes) VALUES ($1, $2, $3) RETURNING id",
-      [address, userAgent, notes]
+      "INSERT INTO addresses (address, user_agent, notes, signature, message) VALUES ($1, $2, $3, $4, $5) RETURNING id",
+      [address, userAgent, notes, signature, message]
     );
     res.json({
       success: true,
