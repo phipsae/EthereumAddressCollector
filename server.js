@@ -152,7 +152,7 @@ app.get('/admin', (req, res) => {
 });
 
 // Start server
-app.listen(PORT, () => {
+app.listen(PORT, '0.0.0.0', () => {
   console.log(`\n🚀 Server running on port ${PORT}`);
   console.log(`📱 Collection page: /collect`);
   console.log(`📊 Admin dashboard: /admin`);
