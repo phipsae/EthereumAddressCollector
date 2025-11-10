@@ -109,9 +109,9 @@ app.post('/api/submit-address', async (req, res) => {
 
   // Basic validation
   if (!address || !/^0x[a-fA-F0-9]{40}$/.test(address)) {
-    return res.status(400).json({ 
-      success: false, 
-      message: 'Invalid Ethereum address format' 
+    return res.status(400).json({
+      success: false,
+      message: 'Invalid Ethereum address format'
     });
   }
 
@@ -119,29 +119,29 @@ app.post('/api/submit-address', async (req, res) => {
     const sql = usePostgres
       ? 'INSERT INTO addresses (address, user_agent, notes) VALUES ($1, $2, $3) RETURNING id'
       : 'INSERT INTO addresses (address, user_agent, notes) VALUES (?, ?, ?)';
-    
+
     const result = await dbRun(sql, [address, userAgent, notes]);
-    
-    res.json({ 
-      success: true, 
+
+    res.json({
+      success: true,
       message: 'Address submitted successfully',
-      id: result.lastID 
+      id: result.lastID
     });
   } catch (err) {
-    const isDuplicate = usePostgres 
-      ? err.code === '23505' 
+    const isDuplicate = usePostgres
+      ? err.code === '23505'
       : err.message.includes('UNIQUE constraint failed');
-    
+
     if (isDuplicate) {
-      return res.status(409).json({ 
-        success: false, 
-        message: 'This address has already been submitted' 
+      return res.status(409).json({
+        success: false,
+        message: 'This address has already been submitted'
       });
     }
     console.error('Error inserting address:', err);
-    res.status(500).json({ 
-      success: false, 
-      message: 'Error saving address' 
+    res.status(500).json({
+      success: false,
+      message: 'Error saving address'
     });
   }
 });
@@ -151,17 +151,17 @@ app.get('/api/addresses', async (req, res) => {
   try {
     const sql = 'SELECT * FROM addresses ORDER BY timestamp DESC';
     const rows = await dbQuery(sql);
-    
-    res.json({ 
-      success: true, 
+
+    res.json({
+      success: true,
       count: rows.length,
-      addresses: rows 
+      addresses: rows
     });
   } catch (err) {
     console.error('Error fetching addresses:', err);
-    res.status(500).json({ 
-      success: false, 
-      message: 'Error fetching addresses' 
+    res.status(500).json({
+      success: false,
+      message: 'Error fetching addresses'
     });
   }
 });
@@ -172,16 +172,16 @@ app.get('/api/count', async (req, res) => {
     const sql = 'SELECT COUNT(*) as count FROM addresses';
     const rows = await dbQuery(sql);
     const count = usePostgres ? parseInt(rows[0].count) : rows[0].count;
-    
-    res.json({ 
-      success: true, 
-      count: count 
+
+    res.json({
+      success: true,
+      count: count
     });
   } catch (err) {
     console.error('Error counting addresses:', err);
-    res.status(500).json({ 
-      success: false, 
-      message: 'Error counting addresses' 
+    res.status(500).json({
+      success: false,
+      message: 'Error counting addresses'
     });
   }
 });
@@ -193,18 +193,18 @@ app.delete('/api/addresses/:id', async (req, res) => {
     const sql = usePostgres
       ? 'DELETE FROM addresses WHERE id = $1'
       : 'DELETE FROM addresses WHERE id = ?';
-    
+
     await dbRun(sql, [id]);
-    
-    res.json({ 
-      success: true, 
-      message: 'Address deleted successfully' 
+
+    res.json({
+      success: true,
+      message: 'Address deleted successfully'
     });
   } catch (err) {
     console.error('Error deleting address:', err);
-    res.status(500).json({ 
-      success: false, 
-      message: 'Error deleting address' 
+    res.status(500).json({
+      success: false,
+      message: 'Error deleting address'
     });
   }
 });
@@ -244,4 +244,3 @@ process.on('SIGINT', async () => {
 });
 
 module.exports = app;
-
