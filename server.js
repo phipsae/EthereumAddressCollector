@@ -1,8 +1,8 @@
-const express = require('express');
-const { Pool } = require('pg');
-const cors = require('cors');
-const bodyParser = require('body-parser');
-const path = require('path');
+const express = require("express");
+const { Pool } = require("pg");
+const cors = require("cors");
+const bodyParser = require("body-parser");
+const path = require("path");
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -10,26 +10,28 @@ const PORT = process.env.PORT || 3000;
 // Middleware
 app.use(cors());
 app.use(bodyParser.json());
-app.use(express.static('public'));
+app.use(express.static("public"));
 
 // PostgreSQL connection
 if (!process.env.DATABASE_URL) {
-  console.error('❌ ERROR: DATABASE_URL environment variable is not set!');
-  console.error('Please add a PostgreSQL database in Railway dashboard.');
+  console.error("❌ ERROR: DATABASE_URL environment variable is not set!");
+  console.error("Please add a PostgreSQL database in Railway dashboard.");
   process.exit(1);
 }
 
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
   ssl: {
-    rejectUnauthorized: false
-  }
+    rejectUnauthorized: false,
+  },
 });
 
-console.log('🐘 Using PostgreSQL database');
+console.log("🐘 Using PostgreSQL database");
 
 // Initialize database table
-pool.query(`
+pool
+  .query(
+    `
   CREATE TABLE IF NOT EXISTS addresses (
     id SERIAL PRIMARY KEY,
     address TEXT NOT NULL UNIQUE,
@@ -37,122 +39,126 @@ pool.query(`
     user_agent TEXT,
     notes TEXT
   )
-`).then(() => {
-  console.log('✅ PostgreSQL table initialized');
-}).catch(err => {
-  console.error('❌ Error initializing PostgreSQL table:', err);
-});
+`
+  )
+  .then(() => {
+    console.log("✅ PostgreSQL table initialized");
+  })
+  .catch((err) => {
+    console.error("❌ Error initializing PostgreSQL table:", err);
+  });
 
 // API Routes
 
 // Submit an address
-app.post('/api/submit-address', async (req, res) => {
+app.post("/api/submit-address", async (req, res) => {
   const { address, notes } = req.body;
-  const userAgent = req.headers['user-agent'];
+  const userAgent = req.headers["user-agent"];
 
   // Basic validation
   if (!address || !/^0x[a-fA-F0-9]{40}$/.test(address)) {
-    return res.status(400).json({ 
-      success: false, 
-      message: 'Invalid Ethereum address format' 
+    return res.status(400).json({
+      success: false,
+      message: "Invalid Ethereum address format",
     });
   }
 
   try {
     const result = await pool.query(
-      'INSERT INTO addresses (address, user_agent, notes) VALUES ($1, $2, $3) RETURNING id',
+      "INSERT INTO addresses (address, user_agent, notes) VALUES ($1, $2, $3) RETURNING id",
       [address, userAgent, notes]
     );
-    res.json({ 
-      success: true, 
-      message: 'Address submitted successfully',
-      id: result.rows[0].id 
+    res.json({
+      success: true,
+      message: "Address submitted successfully",
+      id: result.rows[0].id,
     });
   } catch (err) {
-    if (err.code === '23505') { // Unique constraint violation
-      return res.status(409).json({ 
-        success: false, 
-        message: 'This address has already been submitted' 
+    if (err.code === "23505") {
+      // Unique constraint violation
+      return res.status(409).json({
+        success: false,
+        message: "This address has already been submitted",
       });
     }
-    console.error('Error inserting address:', err);
-    res.status(500).json({ 
-      success: false, 
-      message: 'Error saving address' 
+    console.error("Error inserting address:", err);
+    res.status(500).json({
+      success: false,
+      message: "Error saving address",
     });
   }
 });
 
 // Get all addresses (for admin)
-app.get('/api/addresses', async (req, res) => {
+app.get("/api/addresses", async (req, res) => {
   try {
     const result = await pool.query(
-      'SELECT * FROM addresses ORDER BY timestamp DESC'
+      "SELECT * FROM addresses ORDER BY timestamp DESC"
     );
-    res.json({ 
-      success: true, 
+    res.json({
+      success: true,
       count: result.rows.length,
-      addresses: result.rows 
+      addresses: result.rows,
     });
   } catch (err) {
-    console.error('Error fetching addresses:', err);
-    res.status(500).json({ 
-      success: false, 
-      message: 'Error fetching addresses' 
+    console.error("Error fetching addresses:", err);
+    res.status(500).json({
+      success: false,
+      message: "Error fetching addresses",
     });
   }
 });
 
 // Get address count
-app.get('/api/count', async (req, res) => {
+app.get("/api/count", async (req, res) => {
   try {
-    const result = await pool.query('SELECT COUNT(*) as count FROM addresses');
-    res.json({ 
-      success: true, 
-      count: parseInt(result.rows[0].count) 
+    const result = await pool.query("SELECT COUNT(*) as count FROM addresses");
+    res.json({
+      success: true,
+      count: parseInt(result.rows[0].count),
     });
   } catch (err) {
-    console.error('Error counting addresses:', err);
-    res.status(500).json({ 
-      success: false, 
-      message: 'Error counting addresses' 
+    console.error("Error counting addresses:", err);
+    res.status(500).json({
+      success: false,
+      message: "Error counting addresses",
     });
   }
 });
 
 // Delete an address (admin function)
-app.delete('/api/addresses/:id', async (req, res) => {
+app.delete("/api/addresses/:id", async (req, res) => {
   const id = req.params.id;
   try {
-    await pool.query('DELETE FROM addresses WHERE id = $1', [id]);
-    res.json({ 
-      success: true, 
-      message: 'Address deleted successfully' 
+    await pool.query("DELETE FROM addresses WHERE id = $1", [id]);
+    res.json({
+      success: true,
+      message: "Address deleted successfully",
     });
   } catch (err) {
-    console.error('Error deleting address:', err);
-    res.status(500).json({ 
-      success: false, 
-      message: 'Error deleting address' 
+    console.error("Error deleting address:", err);
+    res.status(500).json({
+      success: false,
+      message: "Error deleting address",
     });
   }
 });
 
 // Serve HTML pages
-app.get('/', (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'index.html'));
+app.get("/", (req, res) => {
+  res.sendFile(path.join(__dirname, "public", "index.html"));
 });
 
-app.get('/collect', (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'collect.html'));
+app.get("/collect", (req, res) => {
+  res.sendFile(path.join(__dirname, "public", "collect.html"));
 });
 
-app.get('/admin', (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'admin.html'));
+app.get("/admin", (req, res) => {
+  res.sendFile(path.join(__dirname, "public", "admin.html"));
 });
 
 // Start server
-app.listen(PORT, '0.0.0.0', () => {
+app.listen(PORT, "0.0.0.0", () => {
   console.log(`\n🚀 Server running on port ${PORT}`);
   console.log(`📱 Collection page: /collect`);
   console.log(`📊 Admin dashboard: /admin`);
@@ -160,11 +166,10 @@ app.listen(PORT, '0.0.0.0', () => {
 });
 
 // Graceful shutdown
-process.on('SIGINT', async () => {
+process.on("SIGINT", async () => {
   await pool.end();
-  console.log('\n💤 Database connection closed');
+  console.log("\n💤 Database connection closed");
   process.exit(0);
 });
 
 module.exports = app;
-
