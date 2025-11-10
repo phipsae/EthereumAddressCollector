@@ -144,6 +144,11 @@ app.delete("/api/addresses/:id", async (req, res) => {
   }
 });
 
+// Health check for Railway
+app.get("/health", (req, res) => {
+  res.status(200).json({ status: "healthy", database: "connected" });
+});
+
 // Serve HTML pages
 app.get("/", (req, res) => {
   res.sendFile(path.join(__dirname, "public", "index.html"));
