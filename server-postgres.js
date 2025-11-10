@@ -47,9 +47,9 @@ app.post('/api/submit-address', async (req, res) => {
 
   // Basic validation
   if (!address || !/^0x[a-fA-F0-9]{40}$/.test(address)) {
-    return res.status(400).json({ 
-      success: false, 
-      message: 'Invalid Ethereum address format' 
+    return res.status(400).json({
+      success: false,
+      message: 'Invalid Ethereum address format'
     });
   }
 
@@ -58,22 +58,22 @@ app.post('/api/submit-address', async (req, res) => {
       'INSERT INTO addresses (address, user_agent, notes) VALUES ($1, $2, $3) RETURNING id',
       [address, userAgent, notes]
     );
-    res.json({ 
-      success: true, 
+    res.json({
+      success: true,
       message: 'Address submitted successfully',
-      id: result.rows[0].id 
+      id: result.rows[0].id
     });
   } catch (err) {
     if (err.code === '23505') { // Unique constraint violation
-      return res.status(409).json({ 
-        success: false, 
-        message: 'This address has already been submitted' 
+      return res.status(409).json({
+        success: false,
+        message: 'This address has already been submitted'
       });
     }
     console.error('Error inserting address:', err);
-    res.status(500).json({ 
-      success: false, 
-      message: 'Error saving address' 
+    res.status(500).json({
+      success: false,
+      message: 'Error saving address'
     });
   }
 });
@@ -84,16 +84,16 @@ app.get('/api/addresses', async (req, res) => {
     const result = await pool.query(
       'SELECT * FROM addresses ORDER BY timestamp DESC'
     );
-    res.json({ 
-      success: true, 
+    res.json({
+      success: true,
       count: result.rows.length,
-      addresses: result.rows 
+      addresses: result.rows
     });
   } catch (err) {
     console.error('Error fetching addresses:', err);
-    res.status(500).json({ 
-      success: false, 
-      message: 'Error fetching addresses' 
+    res.status(500).json({
+      success: false,
+      message: 'Error fetching addresses'
     });
   }
 });
@@ -102,15 +102,15 @@ app.get('/api/addresses', async (req, res) => {
 app.get('/api/count', async (req, res) => {
   try {
     const result = await pool.query('SELECT COUNT(*) as count FROM addresses');
-    res.json({ 
-      success: true, 
-      count: parseInt(result.rows[0].count) 
+    res.json({
+      success: true,
+      count: parseInt(result.rows[0].count)
     });
   } catch (err) {
     console.error('Error counting addresses:', err);
-    res.status(500).json({ 
-      success: false, 
-      message: 'Error counting addresses' 
+    res.status(500).json({
+      success: false,
+      message: 'Error counting addresses'
     });
   }
 });
@@ -120,15 +120,15 @@ app.delete('/api/addresses/:id', async (req, res) => {
   const id = req.params.id;
   try {
     await pool.query('DELETE FROM addresses WHERE id = $1', [id]);
-    res.json({ 
-      success: true, 
-      message: 'Address deleted successfully' 
+    res.json({
+      success: true,
+      message: 'Address deleted successfully'
     });
   } catch (err) {
     console.error('Error deleting address:', err);
-    res.status(500).json({ 
-      success: false, 
-      message: 'Error deleting address' 
+    res.status(500).json({
+      success: false,
+      message: 'Error deleting address'
     });
   }
 });
@@ -162,4 +162,3 @@ process.on('SIGINT', async () => {
 
 // Export for Vercel
 module.exports = app;
-

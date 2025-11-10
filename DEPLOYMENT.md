@@ -64,7 +64,7 @@ Railway is actually easier than Vercel for this use case:
 1. Go to [railway.app](https://railway.app)
 2. Click "New Project" → "Deploy from GitHub"
 3. Select your repository
-4. Click "Add PostgreSQL" 
+4. Click "Add PostgreSQL"
 5. Railway auto-connects database
 6. Done! ✅
 
@@ -173,4 +173,3 @@ Choose based on your needs:
 - **Need serverless?** → Vercel + Supabase
 - **Want simplicity?** → Render
 - **Need control?** → Fly.io with SQLite
-
